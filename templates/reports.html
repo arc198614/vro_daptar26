@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="fw-bold">अहवाल आणि सांख्यिकी (Reports)</h2>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card p-4 border-start border-primary border-4">
+            <h6 class="text-secondary">एकूण तपासणी</h6>
+            <h2 class="fw-bold">{{ stats.total }}</h2>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4 border-start border-success border-4">
+            <h6 class="text-secondary">पूर्ण तपासणी</h6>
+            <h2 class="fw-bold">{{ stats.completed }}</h2>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4 border-start border-warning border-4">
+            <h6 class="text-secondary">प्रलंबित अनुपालन</h6>
+            <h2 class="fw-bold">{{ stats.pending_compliance }}</h2>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card p-4">
+            <h5 class="fw-bold mb-4">तपासणी अहवाल डाऊनलोड करा</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>सजा</th>
+                            <th>तारीख</th>
+                            <th>डाऊनलोड</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for insp in inspections %}
+                        <tr>
+                            <td>#{{ insp['ID'] }}</td>
+                            <td>{{ insp['सजा'] }}</td>
+                            <td>{{ insp['तारीख'] }}</td>
+                            <td>
+                                <a href="{{ url_for('export_pdf', inspection_id=insp['ID']) }}"
+                                    class="btn btn-sm btn-danger text-white">
+                                    PDF डाऊनलोड
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

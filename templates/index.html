@@ -1,0 +1,88 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="fw-bold text-dark">डॅशबोर्ड (Dashboard)</h2>
+        <p class="text-secondary">तपासणी प्रगती आणि सारांश</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Stats Cards -->
+    <div class="col-md-4">
+        <div class="card p-4 text-center">
+            <h5 class="text-secondary mb-2">एकूण तपासणी</h5>
+            <h2 class="fw-bold text-primary">१२</h2>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4 text-center">
+            <h5 class="text-secondary mb-2">पूर्ण अनुपालन</h5>
+            <h2 class="fw-bold text-success">८</h2>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4 text-center">
+            <h5 class="text-secondary mb-2">प्रलंबित (Pending)</h5>
+            <h2 class="fw-bold text-danger">४</h2>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-12">
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold">अलीकडील तपासणी (Recent Inspections)</h5>
+                <a href="{{ url_for('inspect') }}" class="btn btn-primary">नवीन तपासणी सुरू करा</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>तारीख</th>
+                            <th>सजा / गाव</th>
+                            <th>अधिकारी</th>
+                            <th>स्थिती</th>
+                            <th>फाईल</th>
+                            <th>कृती</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if inspections %}
+                        {% for insp in inspections %}
+                        <tr>
+                            <td>{{ insp['तारीख'] }}</td>
+                            <td>{{ insp['सजा'] }}</td>
+                            <td>{{ insp['नाव'] }}</td>
+                            <td>
+                                {% if insp['एकूण ग्रेड'] == 'Pending' %}
+                                <span class="badge bg-warning text-dark">प्रलंबित</span>
+                                {% else %}
+                                <span class="badge bg-success">{{ insp['एकूण ग्रेड'] }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if insp['फाईल लिंक'] %}
+                                <a href="{{ insp['फाईल लिंक'] }}" target="_blank"
+                                    class="btn btn-sm btn-link text-primary p-0">फाईल पहा</a>
+                                {% else %}
+                                <span class="text-muted small">-</span>
+                                {% endif %}
+                            </td>
+                            <td><button class="btn btn-sm btn-outline-primary">तपशील</button></td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-secondary">कोणतीही तपासणी सापडली नाही.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
