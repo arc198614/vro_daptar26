@@ -5,11 +5,11 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"build": "npx svelte-kit sync && vite build",
+		"build": "node node_modules/@sveltejs/kit/svelte-kit.js sync && vite build",
 		"preview": "vite preview",
-		"prepare": "npx svelte-kit sync || echo ''",
-		"check": "npx svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "npx svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+		"prepare": "node node_modules/@sveltejs/kit/svelte-kit.js sync || echo ''",
+		"check": "node node_modules/@sveltejs/kit/svelte-kit.js sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "node node_modules/@sveltejs/kit/svelte-kit.js sync && svelte-check --tsconfig ./tsconfig.json --watch"
 	},
 	"dependencies": {
 		"googleapis": "^170.0.0",
