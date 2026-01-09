@@ -191,7 +191,9 @@ def export_pdf(inspection_id):
             def __init__(self, **kwargs):
                 super().__init__(**kwargs)
                 # Add Devanagari font if available, fallback to default
-                font_path = 'NotoSansDevanagari-Regular.ttf'
+                # Resolve font path relative to this file (works on Vercel)
+                base_dir = os.path.abspath(os.path.dirname(__file__))
+                font_path = os.path.join(base_dir, 'NotoSansDevanagari-Regular.ttf')
                 if os.path.isfile(font_path):
                     self.add_font('NotoSansDevanagari', '', font_path, uni=True)
                     self.set_font('NotoSansDevanagari', size=12)
