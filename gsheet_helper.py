@@ -19,7 +19,20 @@ class GSheetHelper:
         json_creds = os.environ.get('GOOGLE_CREDENTIALS_JSON')
         if json_creds:
             import json
+            import base64
+            import binascii
+            
             try:
+                # Try to decode base64 first
+                try:
+                    decoded_bytes = base64.b64decode(json_creds)
+                    decoded_str = decoded_bytes.decode('utf-8')
+                    # If it looks like JSON, use it
+                    if decoded_str.strip().startswith('{'):
+                         json_creds = decoded_str
+                except binascii.Error:
+                    pass # Not base64, assume raw JSON string
+
                 info = json.loads(json_creds)
                 
                 # Fix: Handle private_key newlines which can be escaped on Vercel/Env
