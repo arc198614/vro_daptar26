@@ -184,38 +184,51 @@ def export_pdf(inspection_id):
     compliance = helper.get_sheet_data('Compliance!A:E')
     remarks = [c for c in compliance if c['Log_ID'] == inspection_id]
 
-    # PDF Generation
-    from fpdf import FPDF
-    class PDF(FPDF):
-        def header(self):
-            self.set_font('Arial', 'B', 15)
-            self.cell(0, 10, 'Inspection Report - GMA System', 0, 1, 'C')
-            self.ln(5)
-
-    pdf = PDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-
-    # Details
-    pdf.cell(200, 10, txt=f"Inspection ID: {inspection['ID']}", ln=True)
-    pdf.cell(200, 10, txt=f"Saja/Village: {inspection['सजा']}", ln=True)
-    pdf.cell(200, 10, txt=f"Officer: {inspection['नाव']}", ln=True)
-    pdf.cell(200, 10, txt=f"Date: {inspection['तारीख']}", ln=True)
-    pdf.cell(200, 10, txt=f"Grade: {inspection['एकूण ग्रेड']}", ln=True)
-    
-    pdf.ln(10)
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(200, 10, txt="Remarks & Compliance:", ln=True)
-    pdf.set_font("Arial", size=10)
-    
-    for r in remarks:
-        pdf.multi_cell(0, 10, txt=f"- Issue: {r['अधिकारी शेरा']}\n  Status: {r['स्थिती']}\n  Explanation: {r['स्पष्टीकरण']}")
-        pdf.ln(2)
+    # PDF Generation with Unicode support
+    try:
+        from fpdf import FPDF
+        class PDF(FPDF):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+                # Add Devanagari font if available, fallback to default
+                font_path = 'NotoSansDevanagari-Regular.ttf'
+                if os.path.isfile(font_path):
+                    self.add_font('NotoSansDevanagari', '', font_path, uni=True)
+                    self.set_font('NotoSansDevanagari', size=12)
+                else:
+                    self.set_font('Arial', size=12)
+            def header(self):
+                self.set_font(self.font_family, 'B', 15)
+                self.cell(0, 10, 'Inspection Report - GMA System', 0, 1, 'C')
+                self.ln(5)
+        pdf = PDF()
+        pdf.add_page()
+        # Details with proper encoding
+        pdf.cell(0, 10, txt=f"Inspection ID: {inspection.get('ID', '')}", ln=True)
+        pdf.cell(0, 10, txt=f"Saja/Village: {inspection.get('सजा', '')}", ln=True)
+        pdf.cell(0, 10, txt=f"Officer: {inspection.get('नाव', '')}", ln=True)
+        pdf.cell(0, 10, txt=f"Date: {inspection.get('तारीख', '')}", ln=True)
+        pdf.cell(0, 10, txt=f"Grade: {inspection.get('एकूण ग्रेड', '')}", ln=True)
+        pdf.ln(10)
+        pdf.set_font(pdf.font_family, 'B', 12)
+        pdf.cell(0, 10, txt="Remarks & Compliance:", ln=True)
+        pdf.set_font(pdf.font_family, size=10)
+        for r in remarks:
+            issue = r.get('अधिकारी शेरा', '')
+            status = r.get('स्थिती', '')
+            explanation = r.get('स्पष्टीकरण', '')
+            pdf.multi_cell(0, 10, txt=f"- Issue: {issue}\n  Status: {status}\n  Explanation: {explanation}")
+            pdf.ln(2)
+    except Exception as e:
+        # Log the error and return a user‑friendly message
+        print(f"PDF generation error: {e}")
+        flash('Failed to generate PDF report.', 'danger')
+        return redirect(url_for('index'))
 
     from flask import Response
-    response = Response(pdf.output(dest='S').encode('latin-1'))
+    pdf_bytes = pdf.output(dest='S').encode('utf-8')
+    response = Response(pdf_bytes, mimetype='application/pdf')
     response.headers.set('Content-Disposition', 'attachment', filename=f'Report_{inspection_id}.pdf')
-    response.headers.set('Content-Type', 'application/pdf')
     return response
 
 if __name__ == '__main__':
