@@ -235,7 +235,8 @@ async function showInspectionDetails(inspectionId) {
             html += `<div class="list-group">`;
             data.files.forEach(file => {
                 html += `
-                    <a href="${file.url}" target="_blank" class="list-group-item list-group-item-action">
+                    <a href="${file.url}" target="_blank" onclick="handleDocumentClick(event, '${file.url}')"
+                       class="list-group-item list-group-item-action">
                         <i class="fas fa-file me-2"></i>
                         दस्तऐवज ${file.name || 'Unnamed'}
                     </a>
@@ -299,6 +300,21 @@ async function showInspectionDetails(inspectionId) {
             </div>
         `;
     }
+}
+
+// Handle document link clicks with error handling
+function handleDocumentClick(event, url) {
+    event.preventDefault();
+
+    // Try to open the link
+    const newWindow = window.open(url, '_blank');
+
+    // If popup blocker or link fails, show error after a short delay
+    setTimeout(() => {
+        if (!newWindow || newWindow.closed) {
+            alert('दस्तऐवज उघडण्यात अयशस्वी. कृपया पॉप-अप ब्लॉकर बंद करा किंवा दस्तऐवज थेट उघडण्याचा प्रयत्न करा.');
+        }
+    }, 1000);
 }
 </script>
 {% endblock %}

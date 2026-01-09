@@ -72,32 +72,33 @@ class GSheetHelper:
             ).execute()
             
             # Make file readable by anyone with the link
+            file_id = file.get('id')
+            permission_set = False
+
             try:
+                # First, try to set permissions
                 self.drive_service.permissions().create(
-                    fileId=file.get('id'),
+                    fileId=file_id,
                     body={
                         'type': 'anyone',
                         'role': 'reader',
                         'allowFileDiscovery': False
                     }
                 ).execute()
+                permission_set = True
+                print(f"Successfully set permissions for file {file_id}")
             except Exception as perm_error:
                 print(f"Warning: Could not set file permissions: {perm_error}")
 
-            # Generate multiple link formats for better compatibility
-            file_id = file.get('id')
-            web_view_link = file.get('webViewLink', '')
+            # Generate the most reliable link format
+            if permission_set:
+                # Use the standard sharing link format
+                final_link = f"https://drive.google.com/file/d/{file_id}/view?usp=sharing"
+            else:
+                # Fallback to alternative formats if permissions failed
+                final_link = f"https://drive.google.com/uc?id={file_id}"
 
-            # Try different link formats
-            links = [
-                web_view_link,
-                f"https://drive.google.com/file/d/{file_id}/view?usp=sharing",
-                f"https://drive.google.com/open?id={file_id}",
-                f"https://docs.google.com/uc?id={file_id}"
-            ]
-
-            # Return the first available link
-            final_link = next((link for link in links if link), f"https://drive.google.com/file/d/{file_id}/view")
+            print(f"Generated link for file {file_id}: {final_link}")
 
             return file_id, final_link
         except Exception as e:
