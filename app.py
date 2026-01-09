@@ -351,6 +351,17 @@ def export_word(inspection_id):
     questions = helper.get_sheet_data('Master_Q!A:D')
     question_map = {q['ID']: q['प्रश्न'] for q in questions}
 
+    # Get uploaded files from Inspection_Files sheet
+    inspection_files = helper.get_sheet_data('Inspection_Files!A:D')
+    files = []
+    for file_data in inspection_files:
+        if file_data.get('Inspection_ID') == inspection_id:
+            files.append({
+                'name': file_data.get('File_Name', 'Unknown File'),
+                'url': file_data.get('File_URL', ''),
+                'question_id': file_data.get('Question_ID', '')
+            })
+
     # Simplified Word Document Generation
     try:
         from docx import Document

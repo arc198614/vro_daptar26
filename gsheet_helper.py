@@ -84,14 +84,22 @@ class GSheetHelper:
             except Exception as perm_error:
                 print(f"Warning: Could not set file permissions: {perm_error}")
 
-            # Return both webViewLink and alternateViewLink for better compatibility
+            # Generate multiple link formats for better compatibility
+            file_id = file.get('id')
             web_view_link = file.get('webViewLink', '')
-            alternate_link = f"https://drive.google.com/file/d/{file.get('id')}/view?usp=sharing"
 
-            # Use alternate link if webViewLink is not available
-            final_link = web_view_link if web_view_link else alternate_link
+            # Try different link formats
+            links = [
+                web_view_link,
+                f"https://drive.google.com/file/d/{file_id}/view?usp=sharing",
+                f"https://drive.google.com/open?id={file_id}",
+                f"https://docs.google.com/uc?id={file_id}"
+            ]
 
-            return file.get('id'), final_link
+            # Return the first available link
+            final_link = next((link for link in links if link), f"https://drive.google.com/file/d/{file_id}/view")
+
+            return file_id, final_link
         except Exception as e:
             print(f"Error uploading to Drive: {e}")
             return None, None
