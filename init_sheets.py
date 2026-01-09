@@ -15,7 +15,7 @@ def initialize_sheets():
 
     sheets_to_init = {
         "Master_Q": ["ID", "विभाग", "प्रश्न", "अपलोड आवश्यक"],
-        "Inspections": ["ID", "सजा", "नाव", "तारीख", "एकूण ग्रेड", "फाईल लिंक"],
+        "Inspections": ["ID", "सजा", "नाव", "रुजू होण्याचा दिनांक", "तारीख", "एकूण ग्रेड", "फाईल लिंक"],
         "Compliance": ["Log_ID", "अधिकारी शेरा", "वरिष्ठ मत", "स्पष्टीकरण", "स्थिती"],
         "Inspection_Answers": ["Inspection_ID", "Question_ID", "Answer", "Remark"]
     }

@@ -77,21 +77,22 @@ def inspect():
                     pass
 
         # Prepare summary row for 'Inspections' sheet
-        # Format: ID, Saja, Name, Date, Grade, File Link
+        # Format: ID, Saja, Name, Registration Date, Date, Grade, File Link
         # Taking the first link as the primary file link for the summary
         primary_link = list(file_links.values())[0] if file_links else ""
-        
+
         row = [
-            inspection_id, 
-            data.get('saja_name'), 
-            data.get('vro_name'), 
-            timestamp, 
+            inspection_id,
+            data.get('saja_name'),
+            data.get('vro_name'),
+            data.get('registration_date'),  # Registration date
+            timestamp,
             "Pending",
             primary_link
         ]
-        
+
         if helper:
-            helper.append_row('Inspections!A:F', row)
+            helper.append_row('Inspections!A:G', row)
             
             # Save answers and remarks to 'Inspection_Answers' sheet for each question
             # First, get all question IDs from the questions list
@@ -166,7 +167,7 @@ def reports():
     inspections = []
     compliance = []
     if helper:
-        inspections = helper.get_sheet_data('Inspections!A:F')
+        inspections = helper.get_sheet_data('Inspections!A:G')
         compliance = helper.get_sheet_data('Compliance!A:E')
     
     # Simple stats for reports
@@ -187,7 +188,7 @@ def export_pdf(inspection_id):
         return redirect(url_for('index'))
 
     # Fetch data
-    inspections = helper.get_sheet_data('Inspections!A:F')
+    inspections = helper.get_sheet_data('Inspections!A:G')
     inspection = next((i for i in inspections if i['ID'] == inspection_id), None)
     
     if not inspection:

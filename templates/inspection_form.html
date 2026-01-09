@@ -9,13 +9,17 @@
             <form action="{{ url_for('inspect') }}" method="POST" enctype="multipart/form-data">
                 <!-- Administrative Details -->
                 <div class="row mb-4">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label class="form-label">सजाचे नाव (Saja Name)</label>
                         <input type="text" class="form-control" name="saja_name" required>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label class="form-label">ग्राम महसूल अधिकारी (VRO Name)</label>
                         <input type="text" class="form-control" name="vro_name" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">रुजू होण्याचा दिनांक (Registration Date)</label>
+                        <input type="date" class="form-control" name="registration_date" required>
                     </div>
                 </div>
 
