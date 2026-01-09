@@ -1,7 +1,0 @@
-flask
-google-auth-oauthlib
-google-api-python-client
-google-auth-httplib2
-gunicorn
-fpdf2
-python-docx

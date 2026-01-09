@@ -1,0 +1,10 @@
+{
+	"/": [],
+	"/api/inspections": [
+		"src/routes/api/inspections/+server.ts"
+	],
+	"/api/inspect": [
+		"src/routes/api/inspect/+server.ts"
+	],
+	"/inspect": []
+}
