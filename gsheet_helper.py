@@ -62,7 +62,7 @@ class GSheetHelper:
             from googleapiclient.http import MediaFileUpload
 
             # Use the specified folder ID if provided, otherwise use default inspection folder
-            default_folder_id = '163HGv_TFGRsSfIZdlqoLHsl6D43klWJH'  # User's specified folder
+            default_folder_id = os.environ.get('GOOGLE_DRIVE_FOLDER_ID', '163HGv_TFGRsSfIZdlqoLHsl6D43klWJH')
             upload_folder_id = folder_id or default_folder_id
 
             file_metadata = {'name': os.path.basename(file_path)}

@@ -76,10 +76,12 @@ def edit_inspection(inspection_id):
                 file.save(file_path)
 
                 # Upload to Google Drive (folder_id is optional)
-                # DRIVE_FOLDER_ID = 'your_folder_id_here'
-                _, link = helper.upload_file(file_path)
+                file_id, link = helper.upload_file(file_path)
                 if link:
                     file_links[key] = link
+                    print(f"Successfully uploaded {file.filename} to Drive: {link}")
+                else:
+                    print(f"Failed to upload {file.filename} to Drive")
 
                 # Clean up local file
                 try:
