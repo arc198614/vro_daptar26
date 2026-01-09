@@ -22,6 +22,10 @@ class GSheetHelper:
             try:
                 info = json.loads(json_creds)
                 
+                # Fix: Handle private_key newlines which can be escaped on Vercel/Env
+                if 'private_key' in info:
+                    info['private_key'] = info['private_key'].replace('\\n', '\n')
+
                 # Add Drive scope for file uploads
                 DRIVE_SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file']
                 return service_account.Credentials.from_service_account_info(info, scopes=DRIVE_SCOPES)
