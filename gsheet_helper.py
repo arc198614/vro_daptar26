@@ -60,10 +60,15 @@ class GSheetHelper:
         """Uploads a file to Google Drive and returns the file ID and webViewLink."""
         try:
             from googleapiclient.http import MediaFileUpload
+
+            # Use the specified folder ID if provided, otherwise use default inspection folder
+            default_folder_id = '163HGv_TFGRsSfIZdlqoLHsl6D43klWJH'  # User's specified folder
+            upload_folder_id = folder_id or default_folder_id
+
             file_metadata = {'name': os.path.basename(file_path)}
-            if folder_id:
-                file_metadata['parents'] = [folder_id]
-            
+            if upload_folder_id:
+                file_metadata['parents'] = [upload_folder_id]
+
             media = MediaFileUpload(file_path, resumable=True)
             file = self.drive_service.files().create(
                 body=file_metadata,
