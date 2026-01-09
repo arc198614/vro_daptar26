@@ -78,7 +78,7 @@ def edit_inspection(inspection_id):
                 # Upload to Google Drive (folder_id is optional)
                 file_id, link = helper.upload_file(file_path)
                 if link:
-                    file_links[key] = link
+                    file_links[key] = {'id': file_id, 'url': link, 'name': file.filename}
                     print(f"Successfully uploaded {file.filename} to Drive: {link}")
                 else:
                     print(f"Failed to upload {file.filename} to Drive")
@@ -90,7 +90,7 @@ def edit_inspection(inspection_id):
                     pass
 
         # Prepare summary row for 'Inspections' sheet (update existing)
-        primary_link = list(file_links.values())[0] if file_links else inspection.get('फाईल लिंक', '')
+        primary_link = list(file_links.values())[0]['url'] if file_links else inspection.get('फाईल लिंक', '')
 
         updated_row = [
             inspection_id,
@@ -187,26 +187,35 @@ def inspect():
         # Handle file uploads and collect links
         import tempfile
         file_links = {}
-        
+
         # Use system temp directory (works on Vercel/Lambda)
         upload_dir = tempfile.gettempdir()
-            
+
+        print(f"Received {len(request.files)} files in request")
         for key, file in request.files.items():
+            print(f"Processing file key: {key}, filename: {file.filename if file else 'None'}")
             if file and file.filename:
                 file_path = os.path.join(upload_dir, file.filename)
                 file.save(file_path)
+                print(f"Saved file to {file_path}")
 
                 # Upload to Google Drive (folder_id is optional)
                 # DRIVE_FOLDER_ID = 'your_folder_id_here'
                 file_id, link = helper.upload_file(file_path)
                 if link:
                     file_links[key] = {'id': file_id, 'url': link, 'name': file.filename}
+                    print(f"Successfully uploaded {file.filename} to Drive: {link}")
+                else:
+                    print(f"Failed to upload {file.filename} to Drive")
 
                 # Clean up local file
                 try:
                     os.remove(file_path)
-                except:
-                    pass
+                    print(f"Cleaned up local file {file_path}")
+                except Exception as e:
+                    print(f"Error cleaning up {file_path}: {e}")
+            else:
+                print(f"Skipping file key {key} - no file or filename")
 
         # Save all uploaded files to Inspection_Files sheet
         for file_key, file_info in file_links.items():
