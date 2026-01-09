@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 import os
 from datetime import datetime
 from gsheet_helper import GSheetHelper
@@ -278,6 +278,49 @@ def export_pdf(inspection_id):
     response = Response(pdf_bytes, mimetype='application/pdf')
     response.headers.set('Content-Disposition', 'attachment', filename=f'Report_{inspection_id}.pdf')
     return response
+
+@app.route('/api/inspection/<inspection_id>')
+def get_inspection_details(inspection_id):
+    """API endpoint to get detailed inspection information."""
+    helper = get_gsheet()
+    if not helper:
+        return {'error': 'Database connection failed'}, 500
+
+    try:
+        # Get inspection details
+        inspections = helper.get_sheet_data('Inspections!A:G')
+        inspection = next((i for i in inspections if i['ID'] == inspection_id), None)
+
+        if not inspection:
+            return {'error': 'Inspection not found'}, 404
+
+        # Get inspection answers
+        answers = helper.get_sheet_data('Inspection_Answers!A:D')
+        inspection_answers = [a for a in answers if a['Inspection_ID'] == inspection_id]
+
+        # Get compliance/remarks
+        compliance = helper.get_sheet_data('Compliance!A:E')
+        remarks = [c for c in compliance if c['Log_ID'] == inspection_id]
+
+        # Get uploaded files (if any)
+        # Note: Files are stored as links in the Inspections sheet under 'फाईल लिंक'
+        files = []
+        if inspection.get('फाईल लिंक'):
+            files.append({
+                'name': f"Inspection_{inspection_id}_file",
+                'url': inspection['फाईल लिंक']
+            })
+
+        return jsonify({
+            'inspection': inspection,
+            'answers': inspection_answers,
+            'remarks': remarks,
+            'files': files
+        })
+
+    except Exception as e:
+        print(f"Error fetching inspection details: {e}")
+        return {'error': 'Internal server error'}, 500
 
 if __name__ == '__main__':
     app.run(debug=True)
