@@ -6,20 +6,20 @@
         <div class="card p-4">
             <h3 class="fw-bold mb-4">दप्तर तपासणी प्रश्नावली</h3>
 
-            <form action="{{ url_for('inspect') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ url_for('edit_inspection', inspection_id=inspection_id) if edit_mode else url_for('inspect') }}" method="POST" enctype="multipart/form-data">
                 <!-- Administrative Details -->
                 <div class="row mb-4">
                     <div class="col-md-4 mb-3">
                         <label class="form-label">सजाचे नाव (Saja Name)</label>
-                        <input type="text" class="form-control" name="saja_name" required>
+                        <input type="text" class="form-control" name="saja_name" value="{{ form_data.saja_name if form_data else '' }}" required>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">ग्राम महसूल अधिकारी (VRO Name)</label>
-                        <input type="text" class="form-control" name="vro_name" required>
+                        <input type="text" class="form-control" name="vro_name" value="{{ form_data.vro_name if form_data else '' }}" required>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">रुजू होण्याचा दिनांक (Registration Date)</label>
-                        <input type="date" class="form-control" name="registration_date" required>
+                        <input type="date" class="form-control" name="registration_date" value="{{ form_data.registration_date if form_data else '' }}" required>
                     </div>
                 </div>
 
@@ -30,20 +30,21 @@
                 <div class="mb-4 p-3 border rounded shadow-sm">
                     <p class="fw-bold mb-2">{{ loop.index }}. {{ q['प्रश्न'] }}</p>
                     <!-- Radio button options: हो, नाही, निरंक/लागू नाही -->
+                    {% set existing_answer = form_data.existing_answers.get(q['ID']) if form_data and form_data.existing_answers else none %}
                     <div class="d-flex gap-3 mb-2">
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="q_{{ q['ID'] }}" id="q_{{ q['ID'] }}_yes"
-                                value="हो">
+                                value="हो" {% if existing_answer and existing_answer.Answer == 'हो' %}checked{% endif %}>
                             <label class="form-check-label" for="q_{{ q['ID'] }}_yes">हो</label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="q_{{ q['ID'] }}" id="q_{{ q['ID'] }}_no"
-                                value="नाही">
+                                value="नाही" {% if existing_answer and existing_answer.Answer == 'नाही' %}checked{% endif %}>
                             <label class="form-check-label" for="q_{{ q['ID'] }}_no">नाही</label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="q_{{ q['ID'] }}" id="q_{{ q['ID'] }}_na"
-                                value="निरंक/लागू नाही">
+                                value="निरंक/लागू नाही" {% if existing_answer and existing_answer.Answer == 'निरंक/लागू नाही' %}checked{% endif %}>
                             <label class="form-check-label" for="q_{{ q['ID'] }}_na">निरंक/लागू नाही</label>
                         </div>
                     </div>
@@ -57,13 +58,13 @@
 
                     <div class="mt-2">
                         <label class="form-label small text-secondary">अधिकारी शेरा (Remarks)</label>
-                        <textarea class="form-control" name="remark_{{ q['ID'] }}" rows="1"></textarea>
+                        <textarea class="form-control" name="remark_{{ q['ID'] }}" rows="1">{{ existing_answer.Remark if existing_answer and existing_answer.Remark else '' }}</textarea>
                     </div>
                 </div>
                 {% endfor %}
 
                 <div class="d-grid mt-4">
-                    <button type="submit" class="btn btn-primary btn-lg">जतन करा (Save Inspection)</button>
+                    <button type="submit" class="btn btn-primary btn-lg">{{ 'अपडेट करा (Update Inspection)' if edit_mode else 'जतन करा (Save Inspection)' }}</button>
                 </div>
             </form>
         </div>
