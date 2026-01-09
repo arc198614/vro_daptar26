@@ -104,6 +104,14 @@
                 </div>
             </div>
             <div class="modal-footer">
+                <div id="downloadButtons" style="display: none;">
+                    <a id="pdfDownloadBtn" href="#" class="btn btn-danger me-2" target="_blank">
+                        <i class="fas fa-file-pdf me-1"></i>PDF डाउनलोड
+                    </a>
+                    <a id="wordDownloadBtn" href="#" class="btn btn-primary me-2" target="_blank">
+                        <i class="fas fa-file-word me-1"></i>Word डाउनलोड
+                    </a>
+                </div>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">बंद करा</button>
             </div>
         </div>
@@ -271,6 +279,15 @@ async function showInspectionDetails(inspectionId) {
         `;
 
         contentDiv.innerHTML = html;
+
+        // Show download buttons and set their links
+        const downloadButtons = document.getElementById('downloadButtons');
+        const pdfBtn = document.getElementById('pdfDownloadBtn');
+        const wordBtn = document.getElementById('wordDownloadBtn');
+
+        pdfBtn.href = `/export_pdf/${inspectionId}`;
+        wordBtn.href = `/export_word/${inspectionId}`;
+        downloadButtons.style.display = 'block';
 
     } catch (error) {
         console.error('Error loading inspection details:', error);

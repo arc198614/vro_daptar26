@@ -279,6 +279,112 @@ def export_pdf(inspection_id):
     response.headers.set('Content-Disposition', 'attachment', filename=f'Report_{inspection_id}.pdf')
     return response
 
+@app.route('/export_word/<inspection_id>')
+def export_word(inspection_id):
+    """Generates a Word document report for a specific inspection."""
+    helper = get_gsheet()
+    if not helper:
+        flash("Sheet connection error", "danger")
+        return redirect(url_for('index'))
+
+    # Fetch data
+    inspections = helper.get_sheet_data('Inspections!A:G')
+    inspection = next((i for i in inspections if i['ID'] == inspection_id), None)
+
+    if not inspection:
+        flash("Inspection not found", "danger")
+        return redirect(url_for('index'))
+
+    # Fetch related compliance/remarks
+    compliance = helper.get_sheet_data('Compliance!A:E')
+    remarks = [c for c in compliance if c['Log_ID'] == inspection_id]
+
+    # Fetch inspection answers
+    answers = helper.get_sheet_data('Inspection_Answers!A:D')
+    inspection_answers = [a for a in answers if a['Inspection_ID'] == inspection_id]
+
+    # Word Document Generation
+    try:
+        from docx import Document
+        from docx.shared import Inches
+        from io import BytesIO
+
+        doc = Document()
+        doc.add_heading('Inspection Report - GMA System', 0)
+
+        # Basic Information
+        doc.add_heading('Basic Information', level=1)
+
+        table = doc.add_table(rows=1, cols=2)
+        table.style = 'Table Grid'
+
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'Field'
+        hdr_cells[1].text = 'Value'
+
+        fields = [
+            ('Inspection ID', inspection.get('ID', '')),
+            ('Saja/Village', inspection.get('सजा', '')),
+            ('Officer', inspection.get('नाव', '')),
+            ('Registration Date', inspection.get('रुजू होण्याचा दिनांक', '')),
+            ('Inspection Date', inspection.get('तारीख', '')),
+            ('Grade', inspection.get('एकूण ग्रेड', '')),
+            ('File Link', inspection.get('फाईल लिंक', ''))
+        ]
+
+        for field_name, field_value in fields:
+            row_cells = table.add_row().cells
+            row_cells[0].text = field_name
+            row_cells[1].text = field_value
+
+        # Inspection Answers
+        if inspection_answers:
+            doc.add_heading('Inspection Answers', level=1)
+
+            answers_table = doc.add_table(rows=1, cols=4)
+            answers_table.style = 'Table Grid'
+
+            hdr_cells = answers_table.rows[0].cells
+            hdr_cells[0].text = 'Question ID'
+            hdr_cells[1].text = 'Question'
+            hdr_cells[2].text = 'Answer'
+            hdr_cells[3].text = 'Remark'
+
+            for answer in inspection_answers:
+                row_cells = answers_table.add_row().cells
+                row_cells[0].text = str(answer.get('Question_ID', ''))
+                row_cells[1].text = f"Question {answer.get('Question_ID', '')}"
+                row_cells[2].text = answer.get('Answer', '')
+                row_cells[3].text = answer.get('Remark', '')
+
+        # Remarks & Compliance
+        if remarks:
+            doc.add_heading('Remarks & Compliance', level=1)
+
+            for remark in remarks:
+                doc.add_paragraph(f"Remark: {remark.get('अधिकारी शेरा', '')}")
+                doc.add_paragraph(f"Senior Remark: {remark.get('वरिष्ठ मत', '')}")
+                doc.add_paragraph(f"Explanation: {remark.get('स्पष्टीकरण', '')}")
+                doc.add_paragraph(f"Status: {remark.get('स्थिती', '')}")
+                doc.add_paragraph("")  # Empty line
+
+        # Save to BytesIO
+        doc_io = BytesIO()
+        doc.save(doc_io)
+        doc_io.seek(0)
+
+    except Exception as e:
+        print(f"Word document generation error: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        flash('Failed to generate Word document report.', 'danger')
+        return redirect(url_for('index'))
+
+    from flask import Response
+    response = Response(doc_io.getvalue(), mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    response.headers.set('Content-Disposition', 'attachment', filename=f'Report_{inspection_id}.docx')
+    return response
+
 @app.route('/api/inspection/<inspection_id>')
 def get_inspection_details(inspection_id):
     """API endpoint to get detailed inspection information."""
