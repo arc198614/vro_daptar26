@@ -71,7 +71,8 @@
                       <th>ID</th>
                       <th>8></th>
                       <th>M0>. .98B2 '?>0@</th>
-                      <th>$>0@</th>
+                      <th>0AB &?(></th>
+                      <th>$*>8#@ &?(></th>
                       <th>8M%?$@</th>
                       <th>C$@</th>
                     </tr>
@@ -84,6 +85,7 @@
                         </td>
                         <td>{inspection.8> || '-'}</td>
                         <td>{inspection.(>5 || '-'}</td>
+                        <td>{inspection['0AB 9K#M/>> &?(>'] || '-'}</td>
                         <td>{inspection.$>0@ || '-'}</td>
                         <td>
                           <span class="badge bg-{inspection['B# M0G!'] === 'Pending' ? 'warning' : 'success'}">

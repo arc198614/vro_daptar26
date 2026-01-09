@@ -157,7 +157,7 @@
               <div class="row mb-4">
                 <div class="col-md-6 mb-3">
                   <label for="registrationDate" class="form-label fw-bold">
-                    रुजू होण्याचा दिनांक (Registration Date) <span class="text-danger">*</span>
+                    सज्यावर रुजू होण्याचा दिनांक (Saja Registration Date) <span class="text-danger">*</span>
                   </label>
                   <input
                     type="date"
@@ -165,7 +165,22 @@
                     id="registrationDate"
                     bind:value={registrationDate}
                     required
+                    placeholder="सज्यावर नोंदणी दिनांक निवडा"
                   >
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="inspectionDate" class="form-label fw-bold">
+                    तपासणी दिनांक (Inspection Date) <span class="text-danger">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    class="form-control"
+                    id="inspectionDate"
+                    value={new Date().toISOString().split('T')[0]}
+                    readonly
+                    title="आजची तारीख आपोआप भरली जाईल"
+                  >
+                  <small class="form-text text-muted">आजची तारीख आपोआप घेतली जाते</small>
                 </div>
               </div>
 
