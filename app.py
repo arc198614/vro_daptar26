@@ -193,23 +193,35 @@ def inspect():
             if file and file.filename:
                 file_path = os.path.join(upload_dir, file.filename)
                 file.save(file_path)
-                
+
                 # Upload to Google Drive (folder_id is optional)
-                # DRIVE_FOLDER_ID = 'your_folder_id_here' 
-                _, link = helper.upload_file(file_path)
+                # DRIVE_FOLDER_ID = 'your_folder_id_here'
+                file_id, link = helper.upload_file(file_path)
                 if link:
-                    file_links[key] = link
-                
+                    file_links[key] = {'id': file_id, 'url': link, 'name': file.filename}
+
                 # Clean up local file
                 try:
                     os.remove(file_path)
                 except:
                     pass
 
+        # Save all uploaded files to Inspection_Files sheet
+        for file_key, file_info in file_links.items():
+            if 'file_' in file_key:
+                question_id = file_key.replace('file_', '')
+                file_row = [
+                    inspection_id,
+                    question_id,
+                    file_info['name'],
+                    file_info['url']
+                ]
+                helper.append_row('Inspection_Files!A:D', file_row)
+
         # Prepare summary row for 'Inspections' sheet
         # Format: ID, Saja, Name, Registration Date, Date, Grade, File Link
         # Taking the first link as the primary file link for the summary
-        primary_link = list(file_links.values())[0] if file_links else ""
+        primary_link = list(file_links.values())[0]['url'] if file_links else ""
 
         row = [
             inspection_id,
@@ -413,12 +425,13 @@ def export_pdf(inspection_id):
 
             pdf.ln(5)
 
-        # Documents Section
-        if inspection.get('फाईल लिंक'):
+        # Documents Section - include all files from Inspection_Files sheet
+        if files:
             pdf.set_font(size=12, style='B')
             pdf.cell(0, 10, txt="अपलोड केलेली दस्तऐवज", ln=True)
             pdf.set_font(size=10)
-            pdf.cell(0, 8, txt=f"दस्तऐवज लिंक: {inspection.get('फाईल लिंक', '')}", ln=True)
+            for file_info in files:
+                pdf.cell(0, 8, txt=f"{file_info['name']}: {file_info['url']}", ln=True)
             pdf.ln(5)
 
         # Remarks & Compliance Section - same as modal
@@ -545,10 +558,11 @@ def export_word(inspection_id):
                 row_cells[2].text = answer.get('Answer', '')
                 row_cells[3].text = answer.get('Remark', '')
 
-        # Documents Section
-        if inspection.get('फाईल लिंक'):
+        # Documents Section - include all files from Inspection_Files sheet
+        if files:
             doc.add_heading('अपलोड केलेली दस्तऐवज', level=1)
-            doc.add_paragraph(f"दस्तऐवज लिंक: {inspection.get('फाईल लिंक', '')}")
+            for file_info in files:
+                doc.add_paragraph(f"{file_info['name']}: {file_info['url']}")
 
         # Remarks & Compliance Section
         if remarks:
@@ -601,13 +615,23 @@ def get_inspection_details(inspection_id):
         compliance = helper.get_sheet_data('Compliance!A:E')
         remarks = [c for c in compliance if c['Log_ID'] == inspection_id]
 
-        # Get uploaded files (if any)
-        # Note: Files are stored as links in the Inspections sheet under 'फाईल लिंक'
+        # Get uploaded files from Inspection_Files sheet
+        inspection_files = helper.get_sheet_data('Inspection_Files!A:D')
         files = []
-        if inspection.get('फाईल लिंक'):
+        for file_data in inspection_files:
+            if file_data.get('Inspection_ID') == inspection_id:
+                files.append({
+                    'name': file_data.get('File_Name', 'Unknown File'),
+                    'url': file_data.get('File_URL', ''),
+                    'question_id': file_data.get('Question_ID', '')
+                })
+
+        # Fallback: Also include any files from the old Inspections sheet column for backward compatibility
+        if inspection.get('फाईल लिंक') and not any(f['url'] == inspection['फाईल लिंक'] for f in files):
             files.append({
-                'name': f"Inspection_{inspection_id}_file",
-                'url': inspection['फाईल लिंक']
+                'name': f"Inspection_{inspection_id}_legacy_file",
+                'url': inspection['फाईल लिंक'],
+                'question_id': 'legacy'
             })
 
         return jsonify({
