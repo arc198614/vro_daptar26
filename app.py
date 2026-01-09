@@ -203,6 +203,10 @@ def export_pdf(inspection_id):
     answers = helper.get_sheet_data('Inspection_Answers!A:D')
     inspection_answers = [a for a in answers if a['Inspection_ID'] == inspection_id]
 
+    # Fetch questions from Master_Q to get actual question text
+    questions = helper.get_sheet_data('Master_Q!A:D')
+    question_map = {q['ID']: q['प्रश्न'] for q in questions}
+
     # PDF Generation with Unicode support using fpdf2
     try:
         from fpdf import FPDF
@@ -268,10 +272,12 @@ def export_pdf(inspection_id):
             pdf.cell(30, 8, txt="उत्तर", border=1, align='C')
             pdf.cell(0, 8, txt="शेरा", border=1, align='C', ln=True)
 
-            # Table data
+            # Table data - use actual question text
             for answer in inspection_answers:
-                pdf.cell(15, 8, txt=str(answer.get('Question_ID', '')), border=1)
-                pdf.cell(50, 8, txt=f"प्रश्न {answer.get('Question_ID', '')}", border=1)
+                question_id = str(answer.get('Question_ID', ''))
+                question_text = question_map.get(question_id, f"प्रश्न {question_id}")
+                pdf.cell(15, 8, txt=question_id, border=1)
+                pdf.cell(50, 8, txt=question_text, border=1)
                 pdf.cell(30, 8, txt=answer.get('Answer', ''), border=1)
                 pdf.cell(0, 8, txt=answer.get('Remark', ''), border=1, ln=True)
 
@@ -340,6 +346,10 @@ def export_word(inspection_id):
     answers = helper.get_sheet_data('Inspection_Answers!A:D')
     inspection_answers = [a for a in answers if a['Inspection_ID'] == inspection_id]
 
+    # Fetch questions from Master_Q to get actual question text
+    questions = helper.get_sheet_data('Master_Q!A:D')
+    question_map = {q['ID']: q['प्रश्न'] for q in questions}
+
     # Word Document Generation with proper Unicode support
     try:
         from docx import Document
@@ -395,11 +405,13 @@ def export_word(inspection_id):
             hdr_cells[2].text = 'उत्तर'
             hdr_cells[3].text = 'शेरा'
 
-            # Add answer rows - same format as modal
+            # Add answer rows - use actual question text
             for answer in inspection_answers:
+                question_id = str(answer.get('Question_ID', ''))
+                question_text = question_map.get(question_id, f"प्रश्न {question_id}")
                 row_cells = answers_table.add_row().cells
-                row_cells[0].text = str(answer.get('Question_ID', ''))
-                row_cells[1].text = f"प्रश्न {answer.get('Question_ID', '')}"
+                row_cells[0].text = question_id
+                row_cells[1].text = question_text
                 row_cells[2].text = answer.get('Answer', '')
                 row_cells[3].text = answer.get('Remark', '')
 
