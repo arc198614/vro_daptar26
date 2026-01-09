@@ -33,7 +33,19 @@ def index():
 def inspect():
     """Form for new inspection."""
     helper = get_gsheet()
-    
+
+    # Load questions from 'Master_Q' sheet (needed for both GET and POST)
+    questions = []
+    if helper:
+        questions = helper.get_sheet_data('Master_Q!A:D')
+
+    # Fallback if sheet is empty or connection fails
+    if not questions:
+        questions = [
+            {"ID": "1", "विभाग": "सामान्य", "प्रश्न": "दप्तर अद्ययावत आहे का?", "अपलोड आवश्यक": "हो"},
+            {"ID": "2", "विभाग": "सामान्य", "प्रश्न": "नोंदवही पूर्ण आहे का?", "अपलोड आवश्यक": "नाही"}
+        ]
+
     if request.method == 'POST':
         # Logic to save to Google Sheets
         data = request.form.to_dict()
@@ -81,40 +93,42 @@ def inspect():
         if helper:
             helper.append_row('Inspections!A:F', row)
             
-            # Save detailed remarks to 'Compliance' sheet for each question
-            for key, value in data.items():
-                if key.startswith('remark_') and value.strip():
-                    question_id = key.replace('remark_', '')
-                    # Format: Log_ID, अधिकारी शेरा, वरिष्ठ मत, स्पष्टीकरण, स्थिती
-                    # Using inspection_id as Log_ID to link them
+            # Save answers and remarks to 'Inspection_Answers' sheet for each question
+            # First, get all question IDs from the questions list
+            question_ids = [q['ID'] for q in questions] if questions else ['1', '2']
+
+            for q_id in question_ids:
+                answer = data.get(f'q_{q_id}', '')
+                remark = data.get(f'remark_{q_id}', '').strip()
+
+                # Save to Inspection_Answers sheet
+                # Format: Inspection_ID, Question_ID, Answer, Remark
+                answers_row = [
+                    inspection_id,
+                    q_id,
+                    answer,
+                    remark
+                ]
+                helper.append_row('Inspection_Answers!A:D', answers_row)
+
+                # Also save to Compliance sheet if remark exists (for backward compatibility)
+                if remark:
                     compliance_row = [
                         inspection_id,
-                        value, # अधिकारी शेरा (Remark)
-                        "",    # वरिष्ठ मत
-                        "",    # स्पष्टीकरण (GMA Explanation)
+                        remark, # अधिकारी शेरा (Remark)
+                        "",     # वरिष्ठ मत
+                        "",     # स्पष्टीकरण (GMA Explanation)
                         "Pending" # स्थिती (Status)
                     ]
                     helper.append_row('Compliance!A:E', compliance_row)
-            
-            print(f"Inspection {inspection_id} submitted with remarks. File links: {file_links}")
+
+            print(f"Inspection {inspection_id} submitted with answers and remarks. File links: {file_links}")
             flash('तपासणी यशस्वीरित्या जतन केली आहे!', 'success')
         else:
             flash('त्रुटी: Google Sheet कनेक्शन अयशस्वी.', 'danger')
             
         return redirect(url_for('index'))
-    
-    # Load questions from 'Master_Q' sheet
-    questions = []
-    if helper:
-        questions = helper.get_sheet_data('Master_Q!A:D')
-    
-    # Fallback if sheet is empty or connection fails
-    if not questions:
-        questions = [
-            {"ID": "1", "विभाग": "सामान्य", "प्रश्न": "दप्तर अद्ययावत आहे का?", "अपलोड आवश्यक": "हो"},
-            {"ID": "2", "विभाग": "सामान्य", "प्रश्न": "नोंदवही पूर्ण आहे का?", "अपलोड आवश्यक": "नाही"}
-        ]
-        
+
     return render_template('inspection_form.html', questions=questions, title="नवीन तपासणी")
 
 @app.route('/compliance', methods=['GET', 'POST'])
