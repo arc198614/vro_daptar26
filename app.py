@@ -362,41 +362,65 @@ def export_word(inspection_id):
                 'question_id': file_data.get('Question_ID', '')
             })
 
-    # Simplified Word Document Generation
+    # Word Document Generation with proper table format
     try:
         from docx import Document
+        from docx.shared import Inches
         from io import BytesIO
 
         doc = Document()
-
-        # Add simple title
         doc.add_heading('तपासणी अहवाल - GMA प्रणाली', 0)
 
-        # Basic Information
+        # Basic Information Section
         doc.add_heading('मूलभूत माहिती', level=1)
 
-        doc.add_paragraph(f"तपासणी ID: {inspection.get('ID', '')}")
-        doc.add_paragraph(f"सजा/गाव: {inspection.get('सजा', '')}")
-        doc.add_paragraph(f"ग्राम महसूल अधिकारी: {inspection.get('नाव', '')}")
-        doc.add_paragraph(f"रुजू होण्याचा दिनांक: {inspection.get('रुजू होण्याचा दिनांक', '')}")
-        doc.add_paragraph(f"तपासणी दिनांक: {inspection.get('तारीख', '')}")
-        doc.add_paragraph(f"स्थिती: {inspection.get('एकूण ग्रेड', '')}")
+        # Create table for basic info
+        table = doc.add_table(rows=1, cols=2)
+        table.style = 'Table Grid'
+
+        # Header row
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'क्षेत्र'
+        hdr_cells[1].text = 'माहिती'
+
+        # Add data rows - same as modal display
+        info_rows = [
+            ('तपासणी ID', inspection.get('ID', '')),
+            ('सजा/गाव', inspection.get('सजा', '')),
+            ('ग्राम महसूल अधिकारी', inspection.get('नाव', '')),
+            ('रुजू होण्याचा दिनांक', inspection.get('रुजू होण्याचा दिनांक', '')),
+            ('तपासणी दिनांक', inspection.get('तारीख', '')),
+            ('स्थिती', inspection.get('एकूण ग्रेड', ''))
+        ]
+
+        for field_name, field_value in info_rows:
+            row_cells = table.add_row().cells
+            row_cells[0].text = field_name
+            row_cells[1].text = field_value
 
         # Inspection Answers Section
         if inspection_answers:
             doc.add_heading('तपासणी उत्तर', level=1)
 
+            answers_table = doc.add_table(rows=1, cols=4)
+            answers_table.style = 'Table Grid'
+
+            # Headers
+            hdr_cells = answers_table.rows[0].cells
+            hdr_cells[0].text = 'प्रश्न क्र.'
+            hdr_cells[1].text = 'प्रश्न'
+            hdr_cells[2].text = 'उत्तर'
+            hdr_cells[3].text = 'शेरा'
+
+            # Add answer rows - use actual question text
             for answer in inspection_answers:
                 question_id = str(answer.get('Question_ID', ''))
                 question_text = question_map.get(question_id, f"प्रश्न {question_id}")
-                answer_text = answer.get('Answer', '')
-                remark_text = answer.get('Remark', '')
-
-                doc.add_paragraph(f"प्रश्न {question_id}: {question_text}")
-                doc.add_paragraph(f"उत्तर: {answer_text}")
-                if remark_text:
-                    doc.add_paragraph(f"शेरा: {remark_text}")
-                doc.add_paragraph("")  # Empty line
+                row_cells = answers_table.add_row().cells
+                row_cells[0].text = question_id
+                row_cells[1].text = question_text
+                row_cells[2].text = answer.get('Answer', '')
+                row_cells[3].text = answer.get('Remark', '')
 
         # Documents Section
         if files:
@@ -415,7 +439,7 @@ def export_word(inspection_id):
                 doc.add_paragraph(f"वरिष्ठ मत: {remark.get('वरिष्ठ मत', '')}")
                 doc.add_paragraph(f"स्पष्टीकरण: {remark.get('स्पष्टीकरण', '')}")
                 doc.add_paragraph(f"स्थिती: {remark.get('स्थिती', '')}")
-                doc.add_paragraph("")
+                doc.add_paragraph("")  # Empty line
 
         # Save to BytesIO
         doc_io = BytesIO()
