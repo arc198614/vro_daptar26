@@ -25,7 +25,7 @@
                 {% for q in questions %}
                 <div class="mb-4 p-3 border rounded shadow-sm">
                     <p class="fw-bold mb-2">{{ loop.index }}. {{ q['प्रश्न'] }}</p>
-                    <!-- Radio button options: हो, नाही, लागू नाही/निरंक -->
+                    <!-- Radio button options: हो, नाही, निरंक/लागू नाही -->
                     <div class="d-flex gap-3 mb-2">
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="q_{{ q['ID'] }}" id="q_{{ q['ID'] }}_yes"
@@ -39,8 +39,8 @@
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="q_{{ q['ID'] }}" id="q_{{ q['ID'] }}_na"
-                                value="लागू नाही/निरंक">
-                            <label class="form-check-label" for="q_{{ q['ID'] }}_na">लागू नाही/निरंक</label>
+                                value="निरंक/लागू नाही">
+                            <label class="form-check-label" for="q_{{ q['ID'] }}_na">निरंक/लागू नाही</label>
                         </div>
                     </div>
 
