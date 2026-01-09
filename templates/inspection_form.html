@@ -36,6 +36,11 @@
                                 value="नाही">
                             <label class="form-check-label" for="q_{{ q['ID'] }}_no">नाही</label>
                         </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="q_{{ q['ID'] }}" id="q_{{ q['ID'] }}_na"
+                                value="लागू नाही/निरंक">
+                            <label class="form-check-label" for="q_{{ q['ID'] }}_na">लागू नाही/निरंक</label>
+                        </div>
                     </div>
 
                     {% if q['अपलोड आवश्यक'] == 'हो' %}
