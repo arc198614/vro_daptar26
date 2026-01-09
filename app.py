@@ -200,7 +200,8 @@ def export_pdf(inspection_id):
                 else:
                     self.set_font('Arial', size=12)
             def header(self):
-                self.set_font(self.font_family, 'B', 15)
+                # Use the same font family without forcing a bold style (Devanagari font has only regular weight)
+                self.set_font(self.font_family, size=15)
                 self.cell(0, 10, 'Inspection Report - GMA System', 0, 1, 'C')
                 self.ln(5)
         pdf = PDF()
@@ -228,7 +229,7 @@ def export_pdf(inspection_id):
         return redirect(url_for('index'))
 
     from flask import Response
-    pdf_bytes = pdf.output(dest='S').encode('utf-8')
+    pdf_bytes = pdf.output(dest='S')
     response = Response(pdf_bytes, mimetype='application/pdf')
     response.headers.set('Content-Disposition', 'attachment', filename=f'Report_{inspection_id}.pdf')
     return response
