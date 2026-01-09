@@ -41,13 +41,15 @@ def inspect():
         inspection_id = os.urandom(4).hex()
         
         # Handle file uploads and collect links
+        import tempfile
         file_links = {}
-        if 'uploads' not in os.listdir('.'):
-            os.makedirs('uploads')
+        
+        # Use system temp directory (works on Vercel/Lambda)
+        upload_dir = tempfile.gettempdir()
             
         for key, file in request.files.items():
             if file and file.filename:
-                file_path = os.path.join('uploads', file.filename)
+                file_path = os.path.join(upload_dir, file.filename)
                 file.save(file_path)
                 
                 # Upload to Google Drive (folder_id is optional)
@@ -57,7 +59,10 @@ def inspect():
                     file_links[key] = link
                 
                 # Clean up local file
-                os.remove(file_path)
+                try:
+                    os.remove(file_path)
+                except:
+                    pass
 
         # Prepare summary row for 'Inspections' sheet
         # Format: ID, Saja, Name, Date, Grade, File Link

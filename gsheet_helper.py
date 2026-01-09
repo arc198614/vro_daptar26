@@ -15,8 +15,23 @@ class GSheetHelper:
         self.drive_service = build('drive', 'v3', credentials=self.creds)
 
     def _authenticate(self):
+        # Option 1: Try Environment Variable (Best for Vercel/Render)
+        json_creds = os.environ.get('GOOGLE_CREDENTIALS_JSON')
+        if json_creds:
+            import json
+            try:
+                info = json.loads(json_creds)
+                
+                # Add Drive scope for file uploads
+                DRIVE_SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file']
+                return service_account.Credentials.from_service_account_info(info, scopes=DRIVE_SCOPES)
+            except Exception as e:
+                print(f"Error loading creds from env: {e}")
+
+        # Option 2: Fallback to local file
         if not os.path.exists(self.credentials_path):
-            raise FileNotFoundError(f"Credentials file not found at {self.credentials_path}")
+            # Generate a helpful error if neither is found
+            raise FileNotFoundError(f"Credentials not found. Set GOOGLE_CREDENTIALS_JSON env var or place {self.credentials_path}")
         
         # Add Drive scope for file uploads
         DRIVE_SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file']
