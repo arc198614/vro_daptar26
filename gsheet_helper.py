@@ -71,13 +71,27 @@ class GSheetHelper:
                 fields='id, webViewLink'
             ).execute()
             
-            # Make file readable by anyone with the link (optional/configurable)
-            self.drive_service.permissions().create(
-                fileId=file.get('id'),
-                body={'type': 'anyone', 'role': 'viewer'}
-            ).execute()
-            
-            return file.get('id'), file.get('webViewLink')
+            # Make file readable by anyone with the link
+            try:
+                self.drive_service.permissions().create(
+                    fileId=file.get('id'),
+                    body={
+                        'type': 'anyone',
+                        'role': 'reader',
+                        'allowFileDiscovery': False
+                    }
+                ).execute()
+            except Exception as perm_error:
+                print(f"Warning: Could not set file permissions: {perm_error}")
+
+            # Return both webViewLink and alternateViewLink for better compatibility
+            web_view_link = file.get('webViewLink', '')
+            alternate_link = f"https://drive.google.com/file/d/{file.get('id')}/view?usp=sharing"
+
+            # Use alternate link if webViewLink is not available
+            final_link = web_view_link if web_view_link else alternate_link
+
+            return file.get('id'), final_link
         except Exception as e:
             print(f"Error uploading to Drive: {e}")
             return None, None

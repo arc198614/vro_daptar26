@@ -321,149 +321,7 @@ def reports():
     
     return render_template('reports.html', title="अहवाल आणि सांख्यिकी", stats=stats, inspections=inspections)
 
-@app.route('/export_pdf/<inspection_id>')
-def export_pdf(inspection_id):
-    """Generates a PDF report for a specific inspection."""
-    helper = get_gsheet()
-    if not helper:
-        flash("Sheet connection error", "danger")
-        return redirect(url_for('index'))
 
-    # Fetch data
-    inspections = helper.get_sheet_data('Inspections!A:G')
-    inspection = next((i for i in inspections if i['ID'] == inspection_id), None)
-    
-    if not inspection:
-        flash("Inspection not found", "danger")
-        return redirect(url_for('index'))
-
-    # Fetch related compliance/remarks
-    compliance = helper.get_sheet_data('Compliance!A:E')
-    remarks = [c for c in compliance if c['Log_ID'] == inspection_id]
-
-    # Fetch inspection answers
-    answers = helper.get_sheet_data('Inspection_Answers!A:D')
-    inspection_answers = [a for a in answers if a['Inspection_ID'] == inspection_id]
-
-    # Fetch questions from Master_Q to get actual question text
-    questions = helper.get_sheet_data('Master_Q!A:D')
-    question_map = {q['ID']: q['प्रश्न'] for q in questions}
-
-    # PDF Generation with Unicode support using fpdf2
-    try:
-        from fpdf import FPDF
-
-        # Create PDF with Unicode support
-        pdf = FPDF()
-        pdf.add_page()
-
-        # Add Devanagari font if available
-        base_dir = os.path.abspath(os.path.dirname(__file__))
-        font_path = os.path.join(base_dir, 'NotoSansDevanagari-Regular.ttf')
-        if os.path.isfile(font_path):
-            pdf.add_font('NotoSansDevanagari', '', font_path, uni=True)
-            pdf.set_font('NotoSansDevanagari', size=12)
-        else:
-            pdf.set_font('Arial', size=12)
-
-        # Title - same as modal
-        pdf.set_font(size=15)
-        pdf.cell(0, 10, 'तपासणी अहवाल - GMA प्रणाली', 0, 1, 'C')
-        pdf.ln(5)
-
-        # Basic Information Table - same as modal
-        pdf.set_font(size=12, style='B')
-        pdf.cell(0, 10, txt="मूलभूत माहिती", ln=True)
-        pdf.set_font(size=10)
-
-        # Create basic info table
-        pdf.cell(60, 8, txt="तपासणी ID:", border=1)
-        pdf.cell(0, 8, txt=inspection.get('ID', ''), border=1, ln=True)
-
-        pdf.cell(60, 8, txt="सजा/गाव:", border=1)
-        pdf.cell(0, 8, txt=inspection.get('सजा', ''), border=1, ln=True)
-
-        pdf.cell(60, 8, txt="ग्राम महसूल अधिकारी:", border=1)
-        pdf.cell(0, 8, txt=inspection.get('नाव', ''), border=1, ln=True)
-
-        pdf.cell(60, 8, txt="रुजू होण्याचा दिनांक:", border=1)
-        pdf.cell(0, 8, txt=inspection.get('रुजू होण्याचा दिनांक', ''), border=1, ln=True)
-
-        pdf.cell(60, 8, txt="तपासणी दिनांक:", border=1)
-        pdf.cell(0, 8, txt=inspection.get('तारीख', ''), border=1, ln=True)
-
-        pdf.cell(60, 8, txt="स्थिती:", border=1)
-        status = inspection.get('एकूण ग्रेड', '')
-        status_text = 'प्रलंबित' if status == 'Pending' else status
-        pdf.cell(0, 8, txt=status_text, border=1, ln=True)
-
-        pdf.cell(60, 8, txt="फाईल लिंक:", border=1)
-        pdf.cell(0, 8, txt=inspection.get('फाईल लिंक', ''), border=1, ln=True)
-
-        pdf.ln(10)
-
-        # Inspection Answers Section - same as modal
-        if inspection_answers:
-            pdf.set_font(size=12, style='B')
-            pdf.cell(0, 10, txt="तपासणी उत्तर", ln=True)
-            pdf.set_font(size=10)
-
-            # Table headers
-            pdf.cell(15, 8, txt="प्रश्न क्र.", border=1, align='C')
-            pdf.cell(50, 8, txt="प्रश्न", border=1, align='C')
-            pdf.cell(30, 8, txt="उत्तर", border=1, align='C')
-            pdf.cell(0, 8, txt="शेरा", border=1, align='C', ln=True)
-
-            # Table data - use actual question text
-            for answer in inspection_answers:
-                question_id = str(answer.get('Question_ID', ''))
-                question_text = question_map.get(question_id, f"प्रश्न {question_id}")
-                pdf.cell(15, 8, txt=question_id, border=1)
-                pdf.cell(50, 8, txt=question_text, border=1)
-                pdf.cell(30, 8, txt=answer.get('Answer', ''), border=1)
-                pdf.cell(0, 8, txt=answer.get('Remark', ''), border=1, ln=True)
-
-            pdf.ln(5)
-
-        # Documents Section - include all files from Inspection_Files sheet
-        if files:
-            pdf.set_font(size=12, style='B')
-            pdf.cell(0, 10, txt="अपलोड केलेली दस्तऐवज", ln=True)
-            pdf.set_font(size=10)
-            for file_info in files:
-                pdf.cell(0, 8, txt=f"{file_info['name']}: {file_info['url']}", ln=True)
-            pdf.ln(5)
-
-        # Remarks & Compliance Section - same as modal
-        if remarks:
-            pdf.set_font(size=12, style='B')
-            pdf.cell(0, 10, txt="अनुपालन आणि शेरा", ln=True)
-            pdf.set_font(size=10)
-
-            for remark in remarks:
-                pdf.cell(0, 8, txt=f"शेरा: {remark.get('अधिकारी शेरा', '')}", ln=True)
-                pdf.cell(0, 8, txt=f"वरिष्ठ मत: {remark.get('वरिष्ठ मत', '')}", ln=True)
-                pdf.cell(0, 8, txt=f"स्पष्टीकरण: {remark.get('स्पष्टीकरण', '')}", ln=True)
-                pdf.cell(0, 8, txt=f"स्थिती: {remark.get('स्थिती', '')}", ln=True)
-                pdf.ln(3)
-    except Exception as e:
-        # Log the error and return a user‑friendly message
-        print(f"PDF generation error: {e}")
-        import traceback
-        print(f"Traceback: {traceback.format_exc()}")
-        flash('Failed to generate PDF report.', 'danger')
-        return redirect(url_for('index'))
-
-    from flask import Response
-    try:
-        pdf_bytes = pdf.output()
-        response = Response(pdf_bytes, mimetype='application/pdf')
-        response.headers.set('Content-Disposition', 'attachment', filename=f'Report_{inspection_id}.pdf')
-        return response
-    except Exception as e:
-        print(f"PDF output error: {e}")
-        flash('Error generating PDF file.', 'danger')
-        return redirect(url_for('index'))
 
 @app.route('/export_word/<inspection_id>')
 def export_word(inspection_id):
@@ -493,76 +351,49 @@ def export_word(inspection_id):
     questions = helper.get_sheet_data('Master_Q!A:D')
     question_map = {q['ID']: q['प्रश्न'] for q in questions}
 
-    # Word Document Generation with proper Unicode support
+    # Simplified Word Document Generation
     try:
         from docx import Document
-        from docx.shared import Inches, Pt
         from io import BytesIO
-        import os
 
         doc = Document()
 
-        # Add title with proper font
-        title = doc.add_heading('तपासणी अहवाल - GMA प्रणाली', 0)
-        title.style.font.size = Pt(16)
+        # Add simple title
+        doc.add_heading('तपासणी अहवाल - GMA प्रणाली', 0)
 
-        # Basic Information Section
+        # Basic Information
         doc.add_heading('मूलभूत माहिती', level=1)
 
-        # Create table for basic info
-        table = doc.add_table(rows=1, cols=2)
-        table.style = 'Table Grid'
-
-        # Header row
-        hdr_cells = table.rows[0].cells
-        hdr_cells[0].text = 'क्षेत्र'
-        hdr_cells[1].text = 'माहिती'
-
-        # Add data rows - same as modal display
-        info_rows = [
-            ('तपासणी ID', inspection.get('ID', '')),
-            ('सजा/गाव', inspection.get('सजा', '')),
-            ('ग्राम महसूल अधिकारी', inspection.get('नाव', '')),
-            ('रुजू होण्याचा दिनांक', inspection.get('रुजू होण्याचा दिनांक', '')),
-            ('तपासणी दिनांक', inspection.get('तारीख', '')),
-            ('स्थिती', inspection.get('एकूण ग्रेड', '')),
-            ('फाईल लिंक', inspection.get('फाईल लिंक', ''))
-        ]
-
-        for field_name, field_value in info_rows:
-            row_cells = table.add_row().cells
-            row_cells[0].text = field_name
-            row_cells[1].text = field_value
+        doc.add_paragraph(f"तपासणी ID: {inspection.get('ID', '')}")
+        doc.add_paragraph(f"सजा/गाव: {inspection.get('सजा', '')}")
+        doc.add_paragraph(f"ग्राम महसूल अधिकारी: {inspection.get('नाव', '')}")
+        doc.add_paragraph(f"रुजू होण्याचा दिनांक: {inspection.get('रुजू होण्याचा दिनांक', '')}")
+        doc.add_paragraph(f"तपासणी दिनांक: {inspection.get('तारीख', '')}")
+        doc.add_paragraph(f"स्थिती: {inspection.get('एकूण ग्रेड', '')}")
 
         # Inspection Answers Section
         if inspection_answers:
             doc.add_heading('तपासणी उत्तर', level=1)
 
-            answers_table = doc.add_table(rows=1, cols=4)
-            answers_table.style = 'Table Grid'
-
-            # Headers
-            hdr_cells = answers_table.rows[0].cells
-            hdr_cells[0].text = 'प्रश्न क्र.'
-            hdr_cells[1].text = 'प्रश्न'
-            hdr_cells[2].text = 'उत्तर'
-            hdr_cells[3].text = 'शेरा'
-
-            # Add answer rows - use actual question text
             for answer in inspection_answers:
                 question_id = str(answer.get('Question_ID', ''))
                 question_text = question_map.get(question_id, f"प्रश्न {question_id}")
-                row_cells = answers_table.add_row().cells
-                row_cells[0].text = question_id
-                row_cells[1].text = question_text
-                row_cells[2].text = answer.get('Answer', '')
-                row_cells[3].text = answer.get('Remark', '')
+                answer_text = answer.get('Answer', '')
+                remark_text = answer.get('Remark', '')
 
-        # Documents Section - include all files from Inspection_Files sheet
+                doc.add_paragraph(f"प्रश्न {question_id}: {question_text}")
+                doc.add_paragraph(f"उत्तर: {answer_text}")
+                if remark_text:
+                    doc.add_paragraph(f"शेरा: {remark_text}")
+                doc.add_paragraph("")  # Empty line
+
+        # Documents Section
         if files:
             doc.add_heading('अपलोड केलेली दस्तऐवज', level=1)
             for file_info in files:
-                doc.add_paragraph(f"{file_info['name']}: {file_info['url']}")
+                doc.add_paragraph(f"दस्तऐवज: {file_info['name']}")
+                doc.add_paragraph(f"लिंक: {file_info['url']}")
+                doc.add_paragraph("")
 
         # Remarks & Compliance Section
         if remarks:
@@ -573,7 +404,7 @@ def export_word(inspection_id):
                 doc.add_paragraph(f"वरिष्ठ मत: {remark.get('वरिष्ठ मत', '')}")
                 doc.add_paragraph(f"स्पष्टीकरण: {remark.get('स्पष्टीकरण', '')}")
                 doc.add_paragraph(f"स्थिती: {remark.get('स्थिती', '')}")
-                doc.add_paragraph("")  # Empty line
+                doc.add_paragraph("")
 
         # Save to BytesIO
         doc_io = BytesIO()
